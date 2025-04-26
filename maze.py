@@ -41,7 +41,7 @@ def print_maze(start, goal, barriers):
                 row += f"[{node_id:2}] "
         print(row)
 
-# Uniform Cost Search
+# Search helpers
 def get_neighbors(node, barriers):
     x, y = get_coordinates(node)
     directions = [(-1, -1), (-1, 0), (-1, 1),
@@ -62,6 +62,12 @@ def edge_cost(node1, node2):
     x2, y2 = get_coordinates(node2)
     return math.hypot(x2 - x1, y2 - y1)
 
+def chebyshev_distance(node1, node2):
+    x1, y1 = get_coordinates(node1)
+    x2, y2 = get_coordinates(node2)
+    return max(abs(x2 - x1), abs(y2 - y1))
+
+# Uniform Cost Search (UCS)
 def uniform_cost_search(start, goal, barriers):
     visited = set()
     came_from = {}
@@ -95,12 +101,54 @@ def uniform_cost_search(start, goal, barriers):
         path.append(current)
         current = came_from.get(current)
         if current is None:
-            return visited_order, len(visited_order), []  # No path found
+            return visited_order, len(visited_order) / 60, []  # No path found
     path.append(start)
     path.reverse()
 
-    return visited_order, len(visited_order), path
+    return visited_order, len(visited_order) / 60, path
 
+# A* Search
+def a_star_search(start, goal, barriers):
+    visited = set()
+    came_from = {}
+    cost_so_far = {start: 0}
+    queue = [(chebyshev_distance(start, goal), start)]
+    visited_order = []
+
+    while queue:
+        current_priority, current_node = heapq.heappop(queue)
+
+        if current_node in visited:
+            continue
+
+        visited.add(current_node)
+        visited_order.append(current_node)
+
+        if current_node == goal:
+            break
+
+        for neighbor in get_neighbors(current_node, barriers):
+            new_cost = cost_so_far[current_node] + edge_cost(current_node, neighbor)
+            if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                cost_so_far[neighbor] = new_cost
+                priority = new_cost + chebyshev_distance(neighbor, goal)
+                heapq.heappush(queue, (priority, neighbor))
+                came_from[neighbor] = current_node
+
+    # Reconstruct path
+    path = []
+    current = goal
+    while current != start:
+        path.append(current)
+        current = came_from.get(current)
+        if current is None:
+            return visited_order, len(visited_order) / 60, []  # No path found
+    path.append(start)
+    path.reverse()
+
+    return visited_order, len(visited_order) / 60, path
+
+# Main Execution
 if __name__ == "__main__":
     maze = generate_maze()
     start_node = maze["start"]
@@ -116,5 +164,13 @@ if __name__ == "__main__":
 
     print("\n--- Uniform Cost Search Results ---")
     print(f"Visited Nodes: {visited_nodes}")
-    print(f"Time to Find Goal: {time_taken} minutes")
+    print(f"Time to Find Goal: {time_taken:.2f} minutes")
     print(f"Final Path: {final_path}")
+
+    # Perform A* Search
+    visited_nodes_a_star, time_taken_a_star, final_path_a_star = a_star_search(start_node, goal_node, barrier_nodes)
+
+    print("\n--- A* Search Results ---")
+    print(f"Visited Nodes: {visited_nodes_a_star}")
+    print(f"Time to Find Goal: {time_taken_a_star:.2f} minutes")
+    print(f"Final Path: {final_path_a_star}")
