@@ -1,6 +1,7 @@
 import random
 import heapq
 import math
+import statistics
 
 # Maze generator for a 6x6 grid with barriers
 ROWS, COLS = 6, 6
@@ -150,27 +151,53 @@ def a_star_search(start, goal, barriers):
 
 # Main Execution
 if __name__ == "__main__":
-    maze = generate_maze()
-    start_node = maze["start"]
-    goal_node = maze["goal"]
-    barrier_nodes = maze["barriers"]
+    ucs_times = []
+    ucs_path_lengths = []
+    astar_times = []
+    astar_path_lengths = []
 
-    print(f"Start Node: {start_node} at {get_coordinates(start_node)}")
-    print(f"Goal Node: {goal_node} at {get_coordinates(goal_node)}")
-    print(f"Barrier Nodes: {barrier_nodes}")
-    print_maze(start_node, goal_node, barrier_nodes)
+    for i in range(4):  # 4 mazes (original + 3 randoms)
+        print(f"\n\n=== Maze {i+1} ===")
+        maze = generate_maze()
+        start_node = maze["start"]
+        goal_node = maze["goal"]
+        barrier_nodes = maze["barriers"]
 
-    visited_nodes, time_taken, final_path = uniform_cost_search(start_node, goal_node, barrier_nodes)
+        print(f"Start Node: {start_node} at {get_coordinates(start_node)}")
+        print(f"Goal Node: {goal_node} at {get_coordinates(goal_node)}")
+        print(f"Barrier Nodes: {barrier_nodes}")
+        print_maze(start_node, goal_node, barrier_nodes)
 
-    print("\n--- Uniform Cost Search Results ---")
-    print(f"Visited Nodes: {visited_nodes}")
-    print(f"Time to Find Goal: {time_taken:.2f} minutes")
-    print(f"Final Path: {final_path}")
+        # UCS
+        visited_nodes, time_taken, final_path = uniform_cost_search(start_node, goal_node, barrier_nodes)
+        ucs_times.append(time_taken)
+        ucs_path_lengths.append(len(final_path))
 
-    # Perform A* Search
-    visited_nodes_a_star, time_taken_a_star, final_path_a_star = a_star_search(start_node, goal_node, barrier_nodes)
+        print("\n--- Uniform Cost Search Results ---")
+        print(f"Visited Nodes: {visited_nodes}")
+        print(f"Time to Find Goal: {time_taken:.2f} minutes")
+        print(f"Final Path: {final_path}")
 
-    print("\n--- A* Search Results ---")
-    print(f"Visited Nodes: {visited_nodes_a_star}")
-    print(f"Time to Find Goal: {time_taken_a_star:.2f} minutes")
-    print(f"Final Path: {final_path_a_star}")
+        # A* Search
+        visited_nodes_a_star, time_taken_a_star, final_path_a_star = a_star_search(start_node, goal_node, barrier_nodes)
+        astar_times.append(time_taken_a_star)
+        astar_path_lengths.append(len(final_path_a_star))
+
+        print("\n--- A* Search Results ---")
+        print(f"Visited Nodes: {visited_nodes_a_star}")
+        print(f"Time to Find Goal: {time_taken_a_star:.2f} minutes")
+        print(f"Final Path: {final_path_a_star}")
+
+    # After all mazes
+    print("\n\n=== Summary Statistics ===")
+    print("\n--- Uniform Cost Search (UCS) ---")
+    print(f"Mean Solution Time: {statistics.mean(ucs_times):.4f} minutes")
+    print(f"Variance of Solution Time: {statistics.variance(ucs_times):.6f}")
+    print(f"Mean Path Length: {statistics.mean(ucs_path_lengths):.2f} nodes")
+    print(f"Variance of Path Length: {statistics.variance(ucs_path_lengths):.2f}")
+
+    print("\n--- A* Search ---")
+    print(f"Mean Solution Time: {statistics.mean(astar_times):.4f} minutes")
+    print(f"Variance of Solution Time: {statistics.variance(astar_times):.6f}")
+    print(f"Mean Path Length: {statistics.mean(astar_path_lengths):.2f} nodes")
+    print(f"Variance of Path Length: {statistics.variance(astar_path_lengths):.2f}")
